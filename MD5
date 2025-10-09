@@ -1,0 +1,9 @@
+2ee4f917cc1a37ca60022fa8eb493f4e *DESCRIPTION
+57089b7276f857e4e8e41a733dbf665b *NAMESPACE
+23ddbb8cf9002a81f0d205656d98d2cd *NEWS.md
+1916675f68aaa18c98f464b93161eca1 *R/PKPDindex.R
+1e88ac4adf9f37efc8e0193eb0a92480 *R/data.R
+7ab2709366ef5ef062d286ec642ee175 *data/PKPDindex_data.rda
+ec35a27fbe7dc2e44f8476b00d175e41 *data/data.r
+5e732d6b3cfc4bdc681955cf308bc4a8 *man/PKPDindex.Rd
+337fe93aec97f9d147152bcd2069f7b9 *man/PKPDindex_data.Rd
