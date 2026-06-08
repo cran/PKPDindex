@@ -10,7 +10,7 @@ PKPDindex(
   y_column = "response",
   E0_fix,
   Emax_fix,
-  EC50_init = NULL,
+  EI50_init = NULL,
   maxiter = 500,
   tol = 1e-05,
   minFactor = 1e-07,
@@ -54,7 +54,7 @@ or provide raw CFU/ml counts at the initial (CFU_init) and 24-hour timepoint (CF
 
 \item{Emax_fix}{Fixed Emax (maximum effect) value.}
 
-\item{EC50_init}{Optional numeric vector specifying initial EC50 values for each x_column. Defaults to NULL, and values are estimated automatically.}
+\item{EI50_init}{Optional numeric vector specifying initial EI50 values for each x_column. Defaults to NULL, and values are estimated automatically.}
 
 \item{maxiter}{Maximum number of iterations - Specifies the maximum number of iterations allowed for the nonlinear least squares (NLS) fitting process. Higher values may help convergence for complex models. Default maxiter = 500.}
 
@@ -114,7 +114,7 @@ The available models (m1 to m8) are defined as follows:
 \item \strong{m5}: Estimated E0, fixed Emax, no Hill coefficient.
 \item \strong{m6}: Estimated E0, fixed Emax, with Hill coefficient.
 \item \strong{m7}: Estimated E0 and Emax, no Hill coefficient.
-\item \strong{m8}: Fully estimated model (E0, Emax, EC50, and gam).
+\item \strong{m8}: Fully estimated model (E0, Emax, EI50, and gam).
 }
 
 Users can select specific models using the \code{select_mod} argument.
@@ -133,7 +133,7 @@ Users can select specific models using the \code{select_mod} argument.
   Emax_fix = 4.8,
   x_columns = c("auc_mic","cmax_mic","t_mic"),
   y_column = "response",
-  EC50_init = c(1,1,1)
+  EI50_init = c(1,1,1)
 )
 
 # Generate and custom plots

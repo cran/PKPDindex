@@ -16,7 +16,7 @@
 #'   , and the function will automatically calculate the log10 change in CFU/ml (Delta log10 CFU/ml).
 #' @param E0_fix Fixed E0 (baseline effect) value.
 #' @param Emax_fix Fixed Emax (maximum effect) value.
-#' @param EC50_init Optional numeric vector specifying initial EC50 values for each x_column. Defaults to NULL, and values are estimated automatically.
+#' @param EI50_init Optional numeric vector specifying initial EI50 values for each x_column. Defaults to NULL, and values are estimated automatically.
 #' @param maxiter Maximum number of iterations - Specifies the maximum number of iterations allowed for the nonlinear least squares (NLS) fitting process. Higher values may help convergence for complex models. Default maxiter = 500.
 #' @param tol Tolerance level - Defines the tolerance for convergence in the NLS algorithm. Lower values indicate stricter convergence criteria. Default tol = 1e-5.
 #' @param minFactor Minimum step factor - Determines the smallest step size used in parameter updates during the NLS fitting process, controlling the precision of optimisation. Default minFactor = 1e-7.
@@ -56,7 +56,7 @@
 #'   Emax_fix = 4.8,
 #'   x_columns = c("auc_mic","cmax_mic","t_mic"),
 #'   y_column = "response",
-#'   EC50_init = c(1,1,1)
+#'   EI50_init = c(1,1,1)
 #' )
 #'
 #' # Generate and custom plots
@@ -100,7 +100,7 @@
 #' - **m5**: Estimated E0, fixed Emax, no Hill coefficient.
 #' - **m6**: Estimated E0, fixed Emax, with Hill coefficient.
 #' - **m7**: Estimated E0 and Emax, no Hill coefficient.
-#' - **m8**: Fully estimated model (E0, Emax, EC50, and gam).
+#' - **m8**: Fully estimated model (E0, Emax, EI50, and gam).
 #'
 #' Users can select specific models using the `select_mod` argument.
 
@@ -110,7 +110,7 @@
 #' @importFrom grDevices recordPlot
 
 
-PKPDindex <- function(dataset, x_columns = NULL, y_column = "response", E0_fix, Emax_fix, EC50_init = NULL ,maxiter = 500, tol = 1e-5, minFactor = 1e-7,select_mod = NULL, plot_results = FALSE ,srow=FALSE, xlim = NULL, ylim = NULL, point_color = NULL,line_color = NULL,  x_label = NULL, y_label = NULL, plot_title = NULL, log_scale_x = NULL,title_cex = 1.2,label_cex = 1.0,axis_cex = 1.0,detail_cex = 1.0) {
+PKPDindex <- function(dataset, x_columns = NULL, y_column = "response", E0_fix, Emax_fix, EI50_init = NULL ,maxiter = 500, tol = 1e-5, minFactor = 1e-7,select_mod = NULL, plot_results = FALSE ,srow=FALSE, xlim = NULL, ylim = NULL, point_color = NULL,line_color = NULL,  x_label = NULL, y_label = NULL, plot_title = NULL, log_scale_x = NULL,title_cex = 1.2,label_cex = 1.0,axis_cex = 1.0,detail_cex = 1.0) {
 
   # Convert dataset column names to lowercase for easy matching
   colnames(dataset) <- tolower(colnames(dataset))
@@ -149,14 +149,14 @@ PKPDindex <- function(dataset, x_columns = NULL, y_column = "response", E0_fix, 
     stop("All selected columns in the dataset must be numeric.")
   }
 
-  # Compute initial EC50 for each PK/PD index or use user-specified values
-  if (!is.null(EC50_init)) {
-    if (length(EC50_init) != length(x_columns)) {
-      stop("The length of EC50_init must match the number of x_columns.")
+  # Compute initial EI50 for each PK/PD index or use user-specified values
+  if (!is.null(EI50_init)) {
+    if (length(EI50_init) != length(x_columns)) {
+      stop("The length of EI50_init must match the number of x_columns.")
     }
-    EC50_init_values <- EC50_init
+    EI50_init_values <- EI50_init
   } else {
-    EC50_init_values <- sapply(x_columns, function(col) {
+    EI50_init_values <- sapply(x_columns, function(col) {
       y50_target <- E0_fix - Emax_fix / 2
       closest_point <- which.min(abs(dataset[[y_column]] - y50_target))
       dataset[[col]][closest_point]
@@ -167,14 +167,14 @@ PKPDindex <- function(dataset, x_columns = NULL, y_column = "response", E0_fix, 
 
   # Define model formulas dynamically
   model_formulas <- list(
-    m1 = function(x) paste0(y_column, " ~ E0_fix - Emax_fix * ", x, " / (EC50 + ", x, ")"),
-    m2 = function(x) paste0(y_column, " ~ E0_fix - Emax_fix * ", x, "^gam / (EC50^gam + ", x, "^gam)"),
-    m3 = function(x) paste0(y_column, " ~ E0_fix - Emax * ", x, " / (EC50 + ", x, ")"),
-    m4 = function(x) paste0(y_column, " ~ E0_fix - Emax * ", x, "^gam / (EC50^gam + ", x, "^gam)"),
-    m5 = function(x) paste0(y_column, " ~ E0 - Emax_fix * ", x, " / (EC50 + ", x, ")"),
-    m6 = function(x) paste0(y_column, " ~ E0 - Emax_fix * ", x, "^gam / (EC50^gam + ", x, "^gam)"),
-    m7 = function(x) paste0(y_column, " ~ E0 - Emax * ", x, " / (EC50 + ", x, ")"),
-    m8 = function(x) paste0(y_column, " ~ E0 - Emax * ", x, "^gam / (EC50^gam + ", x, "^gam)")
+    m1 = function(x) paste0(y_column, " ~ E0_fix - Emax_fix * ", x, " / (EI50 + ", x, ")"),
+    m2 = function(x) paste0(y_column, " ~ E0_fix - Emax_fix * ", x, "^gam / (EI50^gam + ", x, "^gam)"),
+    m3 = function(x) paste0(y_column, " ~ E0_fix - Emax * ", x, " / (EI50 + ", x, ")"),
+    m4 = function(x) paste0(y_column, " ~ E0_fix - Emax * ", x, "^gam / (EI50^gam + ", x, "^gam)"),
+    m5 = function(x) paste0(y_column, " ~ E0 - Emax_fix * ", x, " / (EI50 + ", x, ")"),
+    m6 = function(x) paste0(y_column, " ~ E0 - Emax_fix * ", x, "^gam / (EI50^gam + ", x, "^gam)"),
+    m7 = function(x) paste0(y_column, " ~ E0 - Emax * ", x, " / (EI50 + ", x, ")"),
+    m8 = function(x) paste0(y_column, " ~ E0 - Emax * ", x, "^gam / (EI50^gam + ", x, "^gam)")
   )
 
   all_results <- list()
@@ -183,10 +183,10 @@ PKPDindex <- function(dataset, x_columns = NULL, y_column = "response", E0_fix, 
 
   for (i in seq_along(x_columns)) {
     x_column <- x_columns[i]
-    EC50_inital <- EC50_init_values[i]
+    EI50_inital <- EI50_init_values[i]
 
     model_results <- data.frame(Model = character(0), AIC = numeric(0), R_squared = numeric(0),
-                                E0 = numeric(0), Emax = numeric(0), gam = character(0), EC50 = numeric(0), Success = character(0), stringsAsFactors = FALSE)
+                                E0 = numeric(0), Emax = numeric(0), gam = character(0), EI50 = numeric(0), Success = character(0), stringsAsFactors = FALSE)
 
     # Check if the user specified models for this index
     selected_models <- if (!is.null(select_mod) && x_column %in% names(select_mod)) {
@@ -201,14 +201,14 @@ PKPDindex <- function(dataset, x_columns = NULL, y_column = "response", E0_fix, 
 
         start_list <- switch(
           model_name,
-          m1 = list(EC50 = EC50_inital),
-          m2 = list(EC50 = EC50_inital, gam = gam_init),
-          m3 = list(Emax = Emax_fix, EC50 = EC50_inital),
-          m4 = list(Emax = Emax_fix, EC50 = EC50_inital, gam = gam_init),
-          m5 = list(E0 = E0_fix, EC50 = EC50_inital),
-          m6 = list(E0 = E0_fix, EC50 = EC50_inital, gam = gam_init),
-          m7 = list(E0 = E0_fix, Emax = Emax_fix, EC50 = EC50_inital),
-          m8 = list(E0 = E0_fix, Emax = Emax_fix, EC50 = EC50_inital, gam = gam_init)
+          m1 = list(EI50 = EI50_inital),
+          m2 = list(EI50 = EI50_inital, gam = gam_init),
+          m3 = list(Emax = Emax_fix, EI50 = EI50_inital),
+          m4 = list(Emax = Emax_fix, EI50 = EI50_inital, gam = gam_init),
+          m5 = list(E0 = E0_fix, EI50 = EI50_inital),
+          m6 = list(E0 = E0_fix, EI50 = EI50_inital, gam = gam_init),
+          m7 = list(E0 = E0_fix, Emax = Emax_fix, EI50 = EI50_inital),
+          m8 = list(E0 = E0_fix, Emax = Emax_fix, EI50 = EI50_inital, gam = gam_init)
         )
 
         fit <- nls(model_formula,
@@ -224,7 +224,7 @@ PKPDindex <- function(dataset, x_columns = NULL, y_column = "response", E0_fix, 
           E0 = ifelse("E0" %in% names(fitted_coefficients), fitted_coefficients["E0"], E0_fix),
           Emax = ifelse("Emax" %in% names(fitted_coefficients), fitted_coefficients["Emax"], Emax_fix),
           gam = ifelse("gam" %in% names(fitted_coefficients), fitted_coefficients["gam"], NA),
-          EC50 = ifelse("EC50" %in% names(fitted_coefficients), fitted_coefficients["EC50"], EC50_inital)
+          EI50 = ifelse("EI50" %in% names(fitted_coefficients), fitted_coefficients["EI50"], EI50_inital)
         )
 
         model_results <- rbind(model_results, data.frame(
@@ -234,7 +234,7 @@ PKPDindex <- function(dataset, x_columns = NULL, y_column = "response", E0_fix, 
           E0 = round(parameter_values["E0"], 2),
           Emax = round(parameter_values["Emax"], 2),
           gam = ifelse(is.na(parameter_values["gam"]), 1, round(parameter_values["gam"], 2)),
-          EC50 = round(parameter_values["EC50"], 2),
+          EI50 = round(parameter_values["EI50"], 2),
           Success = "Success"
         ))
 
@@ -248,7 +248,7 @@ PKPDindex <- function(dataset, x_columns = NULL, y_column = "response", E0_fix, 
           E0 = NA,
           Emax = NA,
           gam = NA,
-          EC50 = NA,
+          EI50 = NA,
           Success = "Failure"
         ))
       }
@@ -267,7 +267,7 @@ PKPDindex <- function(dataset, x_columns = NULL, y_column = "response", E0_fix, 
       E0 = model_results$E0,
       Emax = model_results$Emax,
       gam = model_results$gam,
-      EC50 = model_results$EC50,
+      EI50 = model_results$EI50,
       Success = model_results$Success
     )))
   }
@@ -312,14 +312,14 @@ PKPDindex <- function(dataset, x_columns = NULL, y_column = "response", E0_fix, 
 
       start_list <- switch(
         best_model_name,
-        m1 = list(EC50 = as.numeric(best_model$EC50)),
-        m2 = list(EC50 = as.numeric(best_model$EC50), gam = as.numeric(best_model$gam)),
-        m3 = list(Emax = as.numeric(best_model$Emax), EC50 = as.numeric(best_model$EC50)),
-        m4 = list(Emax = as.numeric(best_model$Emax), EC50 = as.numeric(best_model$EC50), gam = as.numeric(best_model$gam)),
-        m5 = list(E0 = as.numeric(best_model$E0), EC50 = as.numeric(best_model$EC50)),
-        m6 = list(E0 = as.numeric(best_model$E0), EC50 = as.numeric(best_model$EC50), gam = as.numeric(best_model$gam)),
-        m7 = list(E0 = as.numeric(best_model$E0), Emax = as.numeric(best_model$Emax), EC50 = as.numeric(best_model$EC50)),
-        m8 = list(E0 = as.numeric(best_model$E0), Emax = as.numeric(best_model$Emax), EC50 = as.numeric(best_model$EC50), gam = as.numeric(best_model$gam))
+        m1 = list(EI50 = as.numeric(best_model$EI50)),
+        m2 = list(EI50 = as.numeric(best_model$EI50), gam = as.numeric(best_model$gam)),
+        m3 = list(Emax = as.numeric(best_model$Emax), EI50 = as.numeric(best_model$EI50)),
+        m4 = list(Emax = as.numeric(best_model$Emax), EI50 = as.numeric(best_model$EI50), gam = as.numeric(best_model$gam)),
+        m5 = list(E0 = as.numeric(best_model$E0), EI50 = as.numeric(best_model$EI50)),
+        m6 = list(E0 = as.numeric(best_model$E0), EI50 = as.numeric(best_model$EI50), gam = as.numeric(best_model$gam)),
+        m7 = list(E0 = as.numeric(best_model$E0), Emax = as.numeric(best_model$Emax), EI50 = as.numeric(best_model$EI50)),
+        m8 = list(E0 = as.numeric(best_model$E0), Emax = as.numeric(best_model$Emax), EI50 = as.numeric(best_model$EI50), gam = as.numeric(best_model$gam))
       )
 
       tryCatch({
@@ -328,7 +328,7 @@ PKPDindex <- function(dataset, x_columns = NULL, y_column = "response", E0_fix, 
         # Calculate predicted y values manually
         x_vals <- seq(min(dataset[[index]]), max(dataset[[index]]), length.out = 100)
         y_vals <- best_model$E0 - best_model$Emax * x_vals ^ best_model$gam /
-          (best_model$EC50 ^ best_model$gam + x_vals ^ best_model$gam)
+          (best_model$EI50 ^ best_model$gam + x_vals ^ best_model$gam)
 
         # Custom x-axis label: Check if x_label is a list or a single value
         if (is.null(x_label)) {
@@ -422,7 +422,7 @@ PKPDindex <- function(dataset, x_columns = NULL, y_column = "response", E0_fix, 
           "E0: ", round(best_model$E0, 4), "\n",
           "Emax: ", round(best_model$Emax, 4), "\n",
           "Gam: ", round(best_model$gam, 4), "\n",
-          "EC50: ", round(best_model$EC50, 4)
+          "EI50: ", round(best_model$EI50, 4)
         )
 
         # Display model details on the plot
